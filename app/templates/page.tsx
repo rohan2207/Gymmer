@@ -2,7 +2,7 @@
 
 import { useTemplates } from "@/lib/hooks/use-templates";
 import { useExerciseMap } from "@/lib/hooks/use-exercises";
-import { TEMPLATE_COLORS } from "@/lib/types";
+import { TEMPLATE_COLORS, TEMPLATE_BG, TEMPLATE_LABELS } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 export default function TemplatesPage() {
@@ -23,16 +23,19 @@ export default function TemplatesPage() {
         {templates.map((tpl) => (
           <div
             key={tpl.id}
-            className="rounded-xl border border-[var(--border)] overflow-hidden"
+            className="rounded-lg bg-[var(--card)] border border-[var(--border)] overflow-hidden"
           >
             {/* Template header */}
-            <div className="flex items-center gap-3 px-4 py-3 bg-[var(--muted)]">
+            <div className="flex items-center gap-3 px-4 py-3 border-b border-[var(--border)]">
               <span
                 className={cn(
-                  "w-3 h-3 rounded-full",
-                  TEMPLATE_COLORS[tpl.id] ?? "bg-gray-400"
+                  "text-xs font-semibold px-2 py-0.5 rounded",
+                  TEMPLATE_BG[tpl.id] ?? "bg-zinc-500/10",
+                  TEMPLATE_COLORS[tpl.id] ?? "text-zinc-500"
                 )}
-              />
+              >
+                {TEMPLATE_LABELS[tpl.id] ?? tpl.id}
+              </span>
               <h2 className="text-sm font-semibold">{tpl.name}</h2>
             </div>
 
@@ -61,7 +64,10 @@ export default function TemplatesPage() {
                       </div>
                     </div>
                     <span className="text-xs text-[var(--muted-fg)] whitespace-nowrap">
-                      {item.sets} × {item.repsMin === item.repsMax ? item.repsMin : `${item.repsMin}-${item.repsMax}`}
+                      {item.sets} x{" "}
+                      {item.repsMin === item.repsMax
+                        ? item.repsMin
+                        : `${item.repsMin}-${item.repsMax}`}
                     </span>
                   </div>
                 );

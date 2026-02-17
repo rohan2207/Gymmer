@@ -16,16 +16,18 @@
   --border: #e4e4e7;
   --ring: #3b82f6;
   --accent: #3b82f6;
+  --card: #f4f4f5;
 }
 
 .dark {
-  --bg: #09090b;
-  --fg: #fafafa;
-  --muted: #18181b;
-  --muted-fg: #a1a1aa;
-  --border: #27272a;
+  --bg: #0a0a0a;
+  --fg: #e4e4e7;
+  --muted: #141414;
+  --muted-fg: #71717a;
+  --border: #1e1e1e;
   --ring: #3b82f6;
   --accent: #3b82f6;
+  --card: #141414;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -37,3 +39,8 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
 input[type="number"] { -moz-appearance: textfield; }
 
 .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
+
+/* Subtle scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }

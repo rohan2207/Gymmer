@@ -1,15 +1,26 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useSettings, updateSettings } from "@/lib/hooks/use-settings";
 import { exportAllData, importAllData, downloadJSON } from "@/lib/db/export-import";
-import { generateSchedule } from "@/lib/db/schedule";
-import { db } from "@/lib/db/schema";
-import { Download, Upload, RefreshCw, Sun, Moon, Monitor } from "lucide-react";
+import { regenerateFullSchedule } from "@/lib/db/schedule";
+import {
+  Download,
+  Upload,
+  RefreshCw,
+  Sun,
+  Moon,
+  Monitor,
+  ChevronRight,
+  LayoutGrid,
+  FileText,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function SettingsPage() {
+  const router = useRouter();
   const settings = useSettings();
   const { theme, setTheme } = useTheme();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -38,20 +49,35 @@ export default function SettingsPage() {
 
   const handleRegenerate = async () => {
     if (!settings) return;
-    if (!confirm("This will clear all scheduled workouts and regenerate. Sessions are kept. Continue?")) return;
+    if (
+      !confirm(
+        "This will clear all scheduled workouts and regenerate. Sessions are kept. Continue?"
+      )
+    )
+      return;
 
-    await db.scheduledWorkouts.clear();
-    await generateSchedule(new Date(settings.planStartDate), 12);
+    await regenerateFullSchedule();
     alert("Schedule regenerated!");
   };
 
-  const handleStartDateChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleStartDateChange = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     await updateSettings({ planStartDate: e.target.value });
   };
 
   const handleAutoFillToggle = async () => {
     if (!settings) return;
-    await updateSettings({ autoFillLastWeights: !settings.autoFillLastWeights });
+    await updateSettings({
+      autoFillLastWeights: !settings.autoFillLastWeights,
+    });
+  };
+
+  const handleUnitToggle = async () => {
+    if (!settings) return;
+    await updateSettings({
+      weightUnit: settings.weightUnit === "lb" ? "kg" : "lb",
+    });
   };
 
   if (!settings) return null;
@@ -61,9 +87,50 @@ export default function SettingsPage() {
       <h1 className="text-xl font-bold mb-5">Settings</h1>
 
       <div className="space-y-6">
+        {/* Quick Links */}
+        <section>
+          <h2 className="text-xs font-medium text-[var(--muted-fg)] mb-2 uppercase tracking-wide">
+            Quick Links
+          </h2>
+          <div className="space-y-1">
+            <button
+              onClick={() => router.push("/program")}
+              className="flex items-center justify-between w-full p-3 rounded-lg bg-[var(--card)] border border-[var(--border)] touch-manipulation"
+            >
+              <div className="flex items-center gap-3">
+                <LayoutGrid className="w-4 h-4 text-[var(--accent)]" />
+                <div className="text-left">
+                  <p className="text-sm font-medium">Program Builder</p>
+                  <p className="text-[10px] text-[var(--muted-fg)]">
+                    Configure your weekly split
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-[var(--muted-fg)]" />
+            </button>
+            <button
+              onClick={() => router.push("/templates")}
+              className="flex items-center justify-between w-full p-3 rounded-lg bg-[var(--card)] border border-[var(--border)] touch-manipulation"
+            >
+              <div className="flex items-center gap-3">
+                <FileText className="w-4 h-4 text-[var(--accent)]" />
+                <div className="text-left">
+                  <p className="text-sm font-medium">Templates</p>
+                  <p className="text-[10px] text-[var(--muted-fg)]">
+                    View workout templates
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-[var(--muted-fg)]" />
+            </button>
+          </div>
+        </section>
+
         {/* Theme */}
         <section>
-          <h2 className="text-sm font-semibold mb-3">Appearance</h2>
+          <h2 className="text-xs font-medium text-[var(--muted-fg)] mb-2 uppercase tracking-wide">
+            Appearance
+          </h2>
           <div className="flex gap-2">
             {[
               { key: "light", icon: Sun, label: "Light" },
@@ -74,10 +141,10 @@ export default function SettingsPage() {
                 key={key}
                 onClick={() => setTheme(key)}
                 className={cn(
-                  "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-colors touch-manipulation",
+                  "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-colors touch-manipulation border",
                   theme === key
-                    ? "bg-[var(--accent)] text-white"
-                    : "bg-[var(--muted)] text-[var(--muted-fg)]"
+                    ? "bg-[var(--accent)] text-white border-[var(--accent)]"
+                    : "bg-[var(--card)] text-[var(--muted-fg)] border-[var(--border)]"
                 )}
               >
                 <Icon className="w-4 h-4" />
@@ -87,22 +154,61 @@ export default function SettingsPage() {
           </div>
         </section>
 
+        {/* Units */}
+        <section>
+          <h2 className="text-xs font-medium text-[var(--muted-fg)] mb-2 uppercase tracking-wide">
+            Units
+          </h2>
+          <button
+            onClick={handleUnitToggle}
+            className="flex items-center justify-between w-full py-2.5 px-3 rounded-lg bg-[var(--card)] border border-[var(--border)] text-sm"
+          >
+            <span>Weight Unit</span>
+            <div className="flex bg-[var(--muted)] rounded-md p-0.5">
+              <span
+                className={cn(
+                  "px-3 py-1 rounded text-xs font-medium transition-colors",
+                  settings.weightUnit === "lb"
+                    ? "bg-[var(--accent)] text-white"
+                    : "text-[var(--muted-fg)]"
+                )}
+              >
+                lb
+              </span>
+              <span
+                className={cn(
+                  "px-3 py-1 rounded text-xs font-medium transition-colors",
+                  settings.weightUnit === "kg"
+                    ? "bg-[var(--accent)] text-white"
+                    : "text-[var(--muted-fg)]"
+                )}
+              >
+                kg
+              </span>
+            </div>
+          </button>
+        </section>
+
         {/* Schedule */}
         <section>
-          <h2 className="text-sm font-semibold mb-3">Schedule</h2>
-          <div className="space-y-3">
+          <h2 className="text-xs font-medium text-[var(--muted-fg)] mb-2 uppercase tracking-wide">
+            Schedule
+          </h2>
+          <div className="space-y-2">
             <div>
-              <label className="text-xs text-[var(--muted-fg)] block mb-1">Plan Start Date</label>
+              <label className="text-xs text-[var(--muted-fg)] block mb-1">
+                Plan Start Date
+              </label>
               <input
                 type="date"
                 value={settings.planStartDate}
                 onChange={handleStartDateChange}
-                className="w-full h-10 px-3 rounded-lg bg-[var(--muted)] border border-[var(--border)] text-sm focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+                className="w-full h-10 px-3 rounded-lg bg-[var(--card)] border border-[var(--border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
               />
             </div>
             <button
               onClick={handleRegenerate}
-              className="flex items-center gap-2 w-full py-2.5 rounded-lg bg-[var(--muted)] text-sm font-medium transition-colors hover:bg-[var(--border)] touch-manipulation"
+              className="flex items-center gap-2 w-full py-2.5 rounded-lg bg-[var(--card)] border border-[var(--border)] text-sm font-medium transition-colors hover:bg-[var(--muted)] touch-manipulation"
             >
               <RefreshCw className="w-4 h-4 ml-3" />
               <span>Regenerate Schedule (12 weeks)</span>
@@ -112,22 +218,28 @@ export default function SettingsPage() {
 
         {/* Logging */}
         <section>
-          <h2 className="text-sm font-semibold mb-3">Logging</h2>
+          <h2 className="text-xs font-medium text-[var(--muted-fg)] mb-2 uppercase tracking-wide">
+            Logging
+          </h2>
           <button
             onClick={handleAutoFillToggle}
-            className="flex items-center justify-between w-full py-2.5 px-3 rounded-lg bg-[var(--muted)] text-sm"
+            className="flex items-center justify-between w-full py-2.5 px-3 rounded-lg bg-[var(--card)] border border-[var(--border)] text-sm"
           >
             <span>Auto-fill last weights</span>
             <div
               className={cn(
                 "w-10 h-6 rounded-full transition-colors relative",
-                settings.autoFillLastWeights ? "bg-[var(--accent)]" : "bg-[var(--border)]"
+                settings.autoFillLastWeights
+                  ? "bg-[var(--accent)]"
+                  : "bg-[var(--border)]"
               )}
             >
               <div
                 className={cn(
                   "absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform",
-                  settings.autoFillLastWeights ? "translate-x-4.5" : "translate-x-0.5"
+                  settings.autoFillLastWeights
+                    ? "translate-x-4.5"
+                    : "translate-x-0.5"
                 )}
               />
             </div>
@@ -136,11 +248,13 @@ export default function SettingsPage() {
 
         {/* Data */}
         <section>
-          <h2 className="text-sm font-semibold mb-3">Data</h2>
+          <h2 className="text-xs font-medium text-[var(--muted-fg)] mb-2 uppercase tracking-wide">
+            Data
+          </h2>
           <div className="space-y-2">
             <button
               onClick={handleExport}
-              className="flex items-center gap-2 w-full py-2.5 rounded-lg bg-[var(--muted)] text-sm font-medium transition-colors hover:bg-[var(--border)] touch-manipulation"
+              className="flex items-center gap-2 w-full py-2.5 rounded-lg bg-[var(--card)] border border-[var(--border)] text-sm font-medium transition-colors hover:bg-[var(--muted)] touch-manipulation"
             >
               <Download className="w-4 h-4 ml-3" />
               <span>Export All Data (JSON)</span>
@@ -148,7 +262,7 @@ export default function SettingsPage() {
 
             <button
               onClick={() => fileRef.current?.click()}
-              className="flex items-center gap-2 w-full py-2.5 rounded-lg bg-[var(--muted)] text-sm font-medium transition-colors hover:bg-[var(--border)] touch-manipulation"
+              className="flex items-center gap-2 w-full py-2.5 rounded-lg bg-[var(--card)] border border-[var(--border)] text-sm font-medium transition-colors hover:bg-[var(--muted)] touch-manipulation"
             >
               <Upload className="w-4 h-4 ml-3" />
               <span>Import Data (JSON)</span>
@@ -162,7 +276,9 @@ export default function SettingsPage() {
             />
 
             {importStatus && (
-              <p className="text-xs text-[var(--muted-fg)] px-1">{importStatus}</p>
+              <p className="text-xs text-[var(--muted-fg)] px-1">
+                {importStatus}
+              </p>
             )}
           </div>
         </section>

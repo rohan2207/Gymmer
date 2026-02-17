@@ -24,10 +24,17 @@ export interface TemplateItem {
   notes?: string;
 }
 
+export interface ProgramConfig {
+  id: string; // always "program"
+  startDate: string; // ISO date
+  weekSlots: string[]; // 7 slots, index 0=Mon..6=Sun, each is templateId or "rest"|"activeRest"
+  scheduleMode: "fixed" | "carryForward";
+}
+
 export interface ScheduledWorkout {
   id?: number;
   dateISO: string; // "YYYY-MM-DD"
-  templateId: string;
+  templateId: string; // can be "rest" or "activeRest"
   status: "planned" | "done" | "skipped";
   overrideTemplateId?: string;
 }
@@ -63,33 +70,44 @@ export interface SessionSet {
   isWarmup: boolean;
 }
 
+export interface CardioLog {
+  id?: number;
+  dateISO: string;
+  type: "liss" | "hiit" | "steps" | "other";
+  durationMin: number;
+  notes?: string;
+}
+
 export interface AppSettings {
   id: string; // always "settings"
   planStartDate: string;
   autoFillLastWeights: boolean;
   theme: "light" | "dark" | "system";
+  weightUnit: "lb" | "kg";
 }
 
 // ── Helpers ──
 
 export type DayOfWeek = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
-export const SCHEDULE_MAP: Record<number, string | null> = {
-  0: null,       // Sunday  = rest
-  1: null,       // Monday  = rest
-  2: "push",     // Tuesday
-  3: "pull",     // Wednesday
-  4: "legs",     // Thursday
-  5: "upper",    // Friday
-  6: "lower",    // Saturday
+export const TEMPLATE_COLORS: Record<string, string> = {
+  push: "text-red-400",
+  pull: "text-blue-400",
+  legs: "text-amber-400",
+  upper: "text-purple-400",
+  lower: "text-emerald-400",
+  rest: "text-zinc-500",
+  activeRest: "text-teal-400",
 };
 
-export const TEMPLATE_COLORS: Record<string, string> = {
-  push: "bg-red-500",
-  pull: "bg-blue-500",
-  legs: "bg-amber-500",
-  upper: "bg-purple-500",
-  lower: "bg-green-500",
+export const TEMPLATE_BG: Record<string, string> = {
+  push: "bg-red-500/15",
+  pull: "bg-blue-500/15",
+  legs: "bg-amber-500/15",
+  upper: "bg-purple-500/15",
+  lower: "bg-emerald-500/15",
+  rest: "bg-zinc-500/10",
+  activeRest: "bg-teal-500/15",
 };
 
 export const TEMPLATE_LABELS: Record<string, string> = {
@@ -98,4 +116,18 @@ export const TEMPLATE_LABELS: Record<string, string> = {
   legs: "Legs",
   upper: "Upper",
   lower: "Lower",
+  rest: "Rest",
+  activeRest: "Active",
 };
+
+export const SLOT_OPTIONS = [
+  { value: "push", label: "Push" },
+  { value: "pull", label: "Pull" },
+  { value: "legs", label: "Legs" },
+  { value: "upper", label: "Upper" },
+  { value: "lower", label: "Lower" },
+  { value: "rest", label: "Rest" },
+  { value: "activeRest", label: "Active Rest" },
+];
+
+export const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];

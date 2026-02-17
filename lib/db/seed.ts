@@ -3,7 +3,7 @@ import { generateSchedule } from "./schedule";
 import { DEFAULT_EXERCISES } from "@/data/exercises";
 import { DEFAULT_TEMPLATES } from "@/data/templates";
 import { toDateISO } from "../utils";
-import type { AppSettings } from "../types";
+import type { AppSettings, ProgramConfig } from "../types";
 
 let _initialized = false;
 
@@ -25,6 +25,18 @@ export async function initializeApp(): Promise<void> {
     await db.templates.bulkAdd(DEFAULT_TEMPLATES);
   }
 
+  // Seed default ProgramConfig
+  const config = await db.programConfig.get("program");
+  if (!config) {
+    const defaultConfig: ProgramConfig = {
+      id: "program",
+      startDate: toDateISO(new Date()),
+      weekSlots: ["push", "pull", "legs", "rest", "upper", "lower", "rest"],
+      scheduleMode: "fixed",
+    };
+    await db.programConfig.add(defaultConfig);
+  }
+
   // Seed settings
   const settings = await db.settings.get("settings");
   if (!settings) {
@@ -33,6 +45,7 @@ export async function initializeApp(): Promise<void> {
       planStartDate: toDateISO(new Date()),
       autoFillLastWeights: true,
       theme: "dark",
+      weightUnit: "lb",
     };
     await db.settings.add(defaultSettings);
   }
@@ -41,9 +54,7 @@ export async function initializeApp(): Promise<void> {
   const swCount = await db.scheduledWorkouts.count();
   if (swCount === 0) {
     const s = await db.settings.get("settings");
-    const startDate = s
-      ? new Date(s.planStartDate)
-      : new Date();
+    const startDate = s ? new Date(s.planStartDate) : new Date();
     await generateSchedule(startDate, 12);
   }
 
