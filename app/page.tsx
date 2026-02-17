@@ -2,73 +2,75 @@
 
 import { useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Check, ChevronRight } from "lucide-react";
+import {
+  Check,
+  Dumbbell,
+  Target,
+  Footprints,
+  ArrowUpCircle,
+  ArrowDownCircle,
+  Heart,
+} from "lucide-react";
+import { useLiveQuery } from "dexie-react-hooks";
 import { useWeekProgress } from "@/lib/hooks/use-week-progress";
 import { useTemplates } from "@/lib/hooks/use-templates";
-import { toDateISO, cn } from "@/lib/utils";
-import {
-  TRAINING_CYCLE,
-  TEMPLATE_LABELS,
-  TEMPLATE_COLORS,
-} from "@/lib/types";
-import { CardioLogSection } from "@/components/day/cardio-log";
 import { useLastSessionsForAllTemplates } from "@/lib/hooks/use-last-session";
 import { useExerciseMap } from "@/lib/hooks/use-exercises";
+import { toDateISO, cn } from "@/lib/utils";
+import { TRAINING_CYCLE, TEMPLATE_LABELS } from "@/lib/types";
+import { CardioLogSection } from "@/components/day/cardio-log";
+import { db } from "@/lib/db/schema";
 
-const ACCENT_BORDERS: Record<string, string> = {
-  push: "border-l-red-400",
-  pull: "border-l-blue-400",
-  legs: "border-l-amber-400",
-  upper: "border-l-purple-400",
-  lower: "border-l-emerald-400",
+const BLOCK_ICONS: Record<string, typeof Dumbbell> = {
+  push: Dumbbell,
+  pull: Target,
+  legs: Footprints,
+  upper: ArrowUpCircle,
+  lower: ArrowDownCircle,
+  cardio: Heart,
 };
 
-function ProgressRing({
-  completed,
-  total,
-}: {
-  completed: number;
-  total: number;
-}) {
-  const radius = 38;
-  const stroke = 6;
-  const circumference = 2 * Math.PI * radius;
-  const progress = total > 0 ? completed / total : 0;
-  const dashOffset = circumference * (1 - progress);
-
-  return (
-    <div className="relative w-24 h-24 flex items-center justify-center">
-      <svg className="w-24 h-24 -rotate-90" viewBox="0 0 88 88">
-        <circle
-          cx="44"
-          cy="44"
-          r={radius}
-          fill="none"
-          stroke="var(--border)"
-          strokeWidth={stroke}
-        />
-        <circle
-          cx="44"
-          cy="44"
-          r={radius}
-          fill="none"
-          stroke="var(--accent)"
-          strokeWidth={stroke}
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={dashOffset}
-          className="transition-all duration-700 ease-out"
-        />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-xl font-bold">{completed}</span>
-        <span className="text-[10px] text-[var(--muted-fg)] font-medium">
-          of {total}
-        </span>
-      </div>
-    </div>
-  );
-}
+const BLOCK_COLORS: Record<
+  string,
+  { text: string; bg: string; glow: string; gradient: string }
+> = {
+  push: {
+    text: "text-red-400",
+    bg: "bg-red-500/20",
+    glow: "ring-red-500/30 shadow-red-500/10",
+    gradient: "from-red-500/10",
+  },
+  pull: {
+    text: "text-blue-400",
+    bg: "bg-blue-500/20",
+    glow: "ring-blue-500/30 shadow-blue-500/10",
+    gradient: "from-blue-500/10",
+  },
+  legs: {
+    text: "text-amber-400",
+    bg: "bg-amber-500/20",
+    glow: "ring-amber-500/30 shadow-amber-500/10",
+    gradient: "from-amber-500/10",
+  },
+  upper: {
+    text: "text-purple-400",
+    bg: "bg-purple-500/20",
+    glow: "ring-purple-500/30 shadow-purple-500/10",
+    gradient: "from-purple-500/10",
+  },
+  lower: {
+    text: "text-emerald-400",
+    bg: "bg-emerald-500/20",
+    glow: "ring-emerald-500/30 shadow-emerald-500/10",
+    gradient: "from-emerald-500/10",
+  },
+  cardio: {
+    text: "text-teal-400",
+    bg: "bg-teal-500/20",
+    glow: "ring-teal-500/30 shadow-teal-500/10",
+    gradient: "from-teal-500/10",
+  },
+};
 
 export default function HomePage() {
   const router = useRouter();
@@ -76,152 +78,178 @@ export default function HomePage() {
   const templates = useTemplates();
   const lastSessions = useLastSessionsForAllTemplates();
   const exerciseMap = useExerciseMap();
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const cardioRef = useRef<HTMLDivElement>(null);
   const today = toDateISO(new Date());
 
   const templateMap = new Map(templates.map((t) => [t.id, t]));
-
   const doneMap = new Map(
     (weekProgress?.done ?? []).map((d) => [d.templateId, d])
   );
 
+  const todayCardio =
+    useLiveQuery(
+      () => db.cardioLogs.where("dateISO").equals(today).toArray(),
+      [today]
+    ) ?? [];
+
+  const completed = weekProgress?.completed ?? 0;
+  const total = weekProgress?.total ?? 5;
+  const allDone = completed >= total;
+
+  const blocks = [
+    ...TRAINING_CYCLE.map((id) => ({ id, type: "workout" as const })),
+    { id: "cardio", type: "cardio" as const },
+  ];
+
   return (
-    <div className="max-w-lg mx-auto px-4 pt-5 pb-24">
-      {/* Header section */}
-      <div className="flex items-center justify-between mb-6">
+    <div className="max-w-lg mx-auto px-3 flex flex-col">
+      {/* ── Header ── */}
+      <div className="flex items-center justify-between py-3 px-1">
         <div>
-          <h1 className="text-2xl font-bold">This Week</h1>
+          <h1 className="text-xl font-bold leading-tight">This Week</h1>
           {weekProgress && (
-            <p className="text-sm text-[var(--muted-fg)] mt-0.5">
+            <p className="text-[11px] text-[var(--muted-fg)] mt-0.5">
               {weekProgress.weekLabel}
             </p>
           )}
         </div>
-        <ProgressRing
-          completed={weekProgress?.completed ?? 0}
-          total={weekProgress?.total ?? 5}
-        />
+        <div
+          className={cn(
+            "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold transition-all",
+            allDone
+              ? "bg-emerald-500/15 text-emerald-400"
+              : "bg-[var(--accent)]/15 text-[var(--accent)]"
+          )}
+        >
+          {completed}/{total}
+          {allDone && (
+            <span className="text-[10px] font-semibold ml-0.5">All Done</span>
+          )}
+        </div>
       </div>
 
-      {/* Swipeable workout cards */}
+      {/* ── 3x2 Grid ── */}
       <div
-        ref={scrollRef}
-        className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-4 -mx-4 px-4 scrollbar-none"
-        style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}
+        className="grid grid-cols-2 gap-3 flex-1"
+        style={{
+          height:
+            "calc(100dvh - 60px - 56px - env(safe-area-inset-bottom, 0px))",
+        }}
       >
-        {TRAINING_CYCLE.map((templateId) => {
-          const tpl = templateMap.get(templateId);
-          const doneInfo = doneMap.get(templateId);
+        {blocks.map(({ id, type }) => {
+          const colors = BLOCK_COLORS[id] ?? BLOCK_COLORS.cardio;
+          const Icon = BLOCK_ICONS[id] ?? Heart;
+
+          if (type === "cardio") {
+            const hasCardio = todayCardio.length > 0;
+            const totalMin = todayCardio.reduce(
+              (sum, c) => sum + c.durationMin,
+              0
+            );
+            const cardioType = todayCardio[0]?.type?.toUpperCase() ?? "";
+
+            return (
+              <button
+                key={id}
+                onClick={() =>
+                  cardioRef.current?.scrollIntoView({ behavior: "smooth" })
+                }
+                className={cn(
+                  "rounded-2xl flex flex-col items-center justify-center gap-1.5 transition-all duration-300 touch-manipulation active:scale-[0.97]",
+                  "bg-gradient-to-b to-transparent shadow-lg shadow-black/20",
+                  hasCardio
+                    ? cn(colors.bg, "ring-2", colors.glow)
+                    : cn(colors.gradient, "bg-[var(--card)]")
+                )}
+              >
+                {hasCardio ? (
+                  <>
+                    <Check className={cn("w-7 h-7", colors.text)} />
+                    <span className={cn("text-sm font-bold", colors.text)}>
+                      Cardio
+                    </span>
+                    <span className="text-[10px] text-[var(--muted-fg)]">
+                      {totalMin} min {cardioType}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Icon className={cn("w-7 h-7", colors.text)} />
+                    <span className="text-sm font-bold">Cardio</span>
+                    <span className="text-[10px] text-[var(--muted-fg)]">
+                      Add Cardio
+                    </span>
+                  </>
+                )}
+              </button>
+            );
+          }
+
+          const tpl = templateMap.get(id);
+          const doneInfo = doneMap.get(id);
           const isDone = !!doneInfo;
-          const label = TEMPLATE_LABELS[templateId] ?? templateId;
+          const label = TEMPLATE_LABELS[id] ?? id;
           const exerciseCount = tpl?.items.length ?? 0;
+          const lastLifts = lastSessions?.[id];
+          const topLift = lastLifts?.[0];
+          const topLiftName = topLift
+            ? exerciseMap.get(topLift.exerciseId)?.name
+            : undefined;
 
           return (
-            <div
-              key={templateId}
+            <button
+              key={id}
+              onClick={() =>
+                isDone
+                  ? router.push(`/day/${doneInfo!.dateISO}`)
+                  : router.push(`/day/${today}?template=${id}`)
+              }
               className={cn(
-                "flex-shrink-0 snap-center rounded-2xl border-l-4 p-5 flex flex-col justify-between",
-                "w-[78vw] max-w-[320px] min-h-[220px]",
-                "bg-[var(--card)] transition-all",
-                ACCENT_BORDERS[templateId] ?? "border-l-zinc-500",
-                isDone && "opacity-60"
+                "rounded-2xl flex flex-col items-center justify-center gap-1 transition-all duration-300 touch-manipulation active:scale-[0.97]",
+                "bg-gradient-to-b to-transparent shadow-lg shadow-black/20",
+                isDone
+                  ? cn(
+                      colors.bg,
+                      "ring-2",
+                      colors.glow,
+                      "animate-block-pop"
+                    )
+                  : cn(colors.gradient, "bg-[var(--card)]")
               )}
             >
-              <div>
-                <div className="flex items-start justify-between">
-                  <h2 className="text-xl font-bold">{label}</h2>
-                  {isDone && (
-                    <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15">
-                      <Check className="w-3 h-3 text-emerald-400" />
-                      <span className="text-[10px] text-emerald-400 font-semibold">
-                        Done
-                      </span>
-                    </div>
-                  )}
-                </div>
-                <p className="text-sm text-[var(--muted-fg)] mt-1">
-                  {exerciseCount} exercises
-                </p>
-                {isDone && doneInfo && (
-                  <p className="text-xs text-[var(--muted-fg)] mt-0.5">
-                    {doneInfo.dayLabel}
-                  </p>
-                )}
-
-                {/* Last session top lifts */}
-                {lastSessions?.[templateId] &&
-                  lastSessions[templateId].length > 0 && (
-                    <div className="mt-3 space-y-1">
-                      <p className="text-[10px] font-semibold text-[var(--muted-fg)] uppercase tracking-wider">
-                        Last session
-                      </p>
-                      {lastSessions[templateId].slice(0, 3).map((lift) => {
-                        const exName =
-                          exerciseMap.get(lift.exerciseId)?.name ??
-                          lift.exerciseId;
-                        const shortName =
-                          exName.length > 22
-                            ? exName.slice(0, 20) + "..."
-                            : exName;
-                        return (
-                          <div
-                            key={lift.exerciseId}
-                            className="flex items-center justify-between"
-                          >
-                            <span className="text-xs text-[var(--muted-fg)] truncate">
-                              {shortName}
-                            </span>
-                            <span className="text-xs font-medium tabular-nums ml-2 shrink-0">
-                              {lift.bestWeight} x {lift.bestReps}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-              </div>
-
               {isDone ? (
-                <button
-                  onClick={() =>
-                    router.push(`/day/${doneInfo!.dateISO}`)
-                  }
-                  className="flex items-center justify-center gap-1.5 w-full py-2.5 mt-4 rounded-xl bg-[var(--muted)] text-sm font-medium text-[var(--muted-fg)] touch-manipulation active:scale-[0.98] transition-transform"
-                >
-                  View Session
-                  <ChevronRight className="w-4 h-4" />
-                </button>
+                <>
+                  <Check className={cn("w-8 h-8", colors.text)} />
+                  <span className={cn("text-sm font-bold", colors.text)}>
+                    Done
+                  </span>
+                  <span className="text-[10px] text-[var(--muted-fg)]">
+                    {doneInfo!.dayLabel}
+                  </span>
+                </>
               ) : (
-                <button
-                  onClick={() =>
-                    router.push(`/day/${today}?template=${templateId}`)
-                  }
-                  className="flex items-center justify-center gap-1.5 w-full py-2.5 mt-4 rounded-xl bg-[var(--accent)] text-white text-sm font-semibold touch-manipulation active:scale-[0.98] transition-transform"
-                >
-                  Start
-                  <ChevronRight className="w-4 h-4" />
-                </button>
+                <>
+                  <Icon className={cn("w-7 h-7", colors.text)} />
+                  <span className="text-base font-bold">{label}</span>
+                  <span className="text-[11px] text-[var(--muted-fg)]">
+                    {exerciseCount} exercises
+                  </span>
+                  {topLift && (
+                    <span className="text-[10px] text-[var(--muted-fg)] tabular-nums mt-0.5">
+                      {topLift.bestWeight} x {topLift.bestReps}
+                    </span>
+                  )}
+                </>
               )}
-            </div>
+            </button>
           );
         })}
       </div>
 
-      {/* Dot indicators */}
-      <div className="flex justify-center gap-1.5 mt-2 mb-6">
-        {TRAINING_CYCLE.map((id) => (
-          <div
-            key={id}
-            className={cn(
-              "w-1.5 h-1.5 rounded-full transition-colors",
-              doneMap.has(id) ? "bg-emerald-400" : "bg-[var(--border)]"
-            )}
-          />
-        ))}
+      {/* ── Cardio log below the fold ── */}
+      <div ref={cardioRef} className="mt-6 pb-24">
+        <CardioLogSection dateISO={today} />
       </div>
-
-      {/* Cardio log for today */}
-      <CardioLogSection dateISO={today} />
     </div>
   );
 }
