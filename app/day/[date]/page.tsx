@@ -21,6 +21,7 @@ import { fromDateISO, cn, toDateISO } from "@/lib/utils";
 import { TEMPLATE_LABELS, TEMPLATE_COLORS } from "@/lib/types";
 import type { SessionSet } from "@/lib/types";
 import { CardioLogSection } from "@/components/day/cardio-log";
+import { useLastSessionForTemplate } from "@/lib/hooks/use-last-session";
 import { db } from "@/lib/db/schema";
 
 export default function DayPage({
@@ -51,6 +52,7 @@ export default function DayPage({
 
   const sessionExercises = useSessionExercises(session?.id);
   const allSets = useAllSessionSetsForSession(session?.id);
+  const lastData = useLastSessionForTemplate(existingTemplateId);
 
   const [autoStarted, setAutoStarted] = useState(false);
 
@@ -260,14 +262,21 @@ export default function DayPage({
               (a, b) => a.setNumber - b.setNumber
             );
 
+            const lastBest = lastData?.get(se.exerciseId);
+
             return (
               <div key={se.id}>
                 {/* Exercise header */}
-                <div className="flex items-start justify-between mb-1">
+                <div className="flex items-start justify-between mb-0.5">
                   <div className="flex-1 min-w-0">
                     <p className="text-[15px] font-semibold leading-tight">
                       {ex?.name ?? se.exerciseId}
                     </p>
+                    {lastBest && (
+                      <p className="text-[11px] text-[var(--muted-fg)] mt-0.5">
+                        Last: {lastBest.weight} x {lastBest.reps}
+                      </p>
+                    )}
                   </div>
                   <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-[var(--muted)] text-[var(--muted-fg)] ml-2 shrink-0">
                     {se.targetRepsMin === se.targetRepsMax

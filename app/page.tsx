@@ -12,6 +12,8 @@ import {
   TEMPLATE_COLORS,
 } from "@/lib/types";
 import { CardioLogSection } from "@/components/day/cardio-log";
+import { useLastSessionsForAllTemplates } from "@/lib/hooks/use-last-session";
+import { useExerciseMap } from "@/lib/hooks/use-exercises";
 
 const ACCENT_BORDERS: Record<string, string> = {
   push: "border-l-red-400",
@@ -72,6 +74,8 @@ export default function HomePage() {
   const router = useRouter();
   const weekProgress = useWeekProgress();
   const templates = useTemplates();
+  const lastSessions = useLastSessionsForAllTemplates();
+  const exerciseMap = useExerciseMap();
   const scrollRef = useRef<HTMLDivElement>(null);
   const today = toDateISO(new Date());
 
@@ -117,7 +121,7 @@ export default function HomePage() {
               key={templateId}
               className={cn(
                 "flex-shrink-0 snap-center rounded-2xl border-l-4 p-5 flex flex-col justify-between",
-                "w-[78vw] max-w-[320px] min-h-[180px]",
+                "w-[78vw] max-w-[320px] min-h-[220px]",
                 "bg-[var(--card)] transition-all",
                 ACCENT_BORDERS[templateId] ?? "border-l-zinc-500",
                 isDone && "opacity-60"
@@ -143,6 +147,38 @@ export default function HomePage() {
                     {doneInfo.dayLabel}
                   </p>
                 )}
+
+                {/* Last session top lifts */}
+                {lastSessions?.[templateId] &&
+                  lastSessions[templateId].length > 0 && (
+                    <div className="mt-3 space-y-1">
+                      <p className="text-[10px] font-semibold text-[var(--muted-fg)] uppercase tracking-wider">
+                        Last session
+                      </p>
+                      {lastSessions[templateId].slice(0, 3).map((lift) => {
+                        const exName =
+                          exerciseMap.get(lift.exerciseId)?.name ??
+                          lift.exerciseId;
+                        const shortName =
+                          exName.length > 22
+                            ? exName.slice(0, 20) + "..."
+                            : exName;
+                        return (
+                          <div
+                            key={lift.exerciseId}
+                            className="flex items-center justify-between"
+                          >
+                            <span className="text-xs text-[var(--muted-fg)] truncate">
+                              {shortName}
+                            </span>
+                            <span className="text-xs font-medium tabular-nums ml-2 shrink-0">
+                              {lift.bestWeight} x {lift.bestReps}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
               </div>
 
               {isDone ? (
