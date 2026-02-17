@@ -146,7 +146,7 @@ export default function DayPage({
   const noWorkout = !session && !templateParam;
 
   return (
-    <div className="max-w-lg mx-auto px-4 pb-40">
+    <div className="max-w-lg mx-auto px-4 pb-52">
       {/* ── Sticky header ── */}
       <div className="sticky top-0 z-30 bg-[var(--bg)]/95 backdrop-blur-sm pb-2 pt-3 -mx-4 px-4">
         <div className="flex items-center justify-between">
@@ -414,15 +414,20 @@ export default function DayPage({
       )}
 
       {/* ── Cardio log ── */}
-      <CardioLogSection dateISO={date} />
+      <div className="mt-8">
+        <CardioLogSection dateISO={date} />
+      </div>
+
+      {/* Spacer so content doesn't hide behind sticky bars */}
+      {session && !isFinished && !isActiveRest && <div className="h-20" />}
 
       {/* ── Sticky finish bar ── */}
       {session && !isFinished && !isActiveRest && (
-        <div className="fixed bottom-16 md:bottom-0 inset-x-0 z-20 p-3 bg-[var(--bg)]/95 backdrop-blur-sm">
+        <div className="fixed bottom-14 md:bottom-0 inset-x-0 z-20 px-4 py-2 bg-[var(--bg)]/95 backdrop-blur-sm border-t border-[var(--border)]">
           <div className="max-w-lg mx-auto">
             <button
               onClick={handleFinish}
-              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-[var(--accent)] text-white font-semibold text-sm transition-all hover:opacity-90 touch-manipulation active:scale-[0.98]"
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[var(--accent)] text-white font-semibold text-sm transition-all hover:opacity-90 touch-manipulation active:scale-[0.98]"
             >
               <Check className="w-4 h-4" />
               Finish Workout
