@@ -14,7 +14,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <Dumbbell className="w-10 h-10 mx-auto mb-3 text-[var(--accent)] animate-pulse" />
-          <p className="text-sm text-[var(--muted-fg)]">Loading Muscle Calendar...</p>
+          <p className="text-sm text-[var(--muted-fg)]">Loading...</p>
         </div>
       </div>
     );

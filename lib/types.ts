@@ -131,3 +131,6 @@ export const SLOT_OPTIONS = [
 ];
 
 export const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+export const TRAINING_CYCLE = ["push", "pull", "legs", "upper", "lower"] as const;
+export type TrainingType = (typeof TRAINING_CYCLE)[number];
