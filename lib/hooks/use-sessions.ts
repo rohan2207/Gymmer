@@ -152,6 +152,18 @@ export async function finishSession(sessionId: number, dateISO: string) {
   }
 }
 
+export async function undoFinishSession(sessionId: number, dateISO: string) {
+  await db.sessions.update(sessionId, { finishedAt: undefined });
+
+  const sw = await db.scheduledWorkouts
+    .where("dateISO")
+    .equals(dateISO)
+    .first();
+  if (sw) {
+    await db.scheduledWorkouts.update(sw.id!, { status: "planned" });
+  }
+}
+
 export async function updateSet(
   setId: number,
   updates: Partial<SessionSet>

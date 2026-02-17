@@ -13,6 +13,7 @@ import {
   useAllSessionSetsForSession,
   startSession,
   finishSession,
+  undoFinishSession,
   updateSet,
   addSetToExercise,
   removeLastSet,
@@ -79,6 +80,11 @@ export default function DayPage({
   const handleFinish = async () => {
     if (!session) return;
     await finishSession(session.id!, date);
+  };
+
+  const handleUndo = async () => {
+    if (!session) return;
+    await undoFinishSession(session.id!, date);
   };
 
   const handleSetChange = (
@@ -180,12 +186,18 @@ export default function DayPage({
           )}
 
           {isFinished && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10">
+            <button
+              onClick={handleUndo}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 touch-manipulation active:scale-95 transition-transform"
+            >
               <CheckCircle2 className="w-4 h-4 text-emerald-400" />
               <span className="text-xs text-emerald-400 font-semibold">
                 Done
               </span>
-            </div>
+              <span className="text-[10px] text-emerald-400/60 ml-0.5">
+                (tap to undo)
+              </span>
+            </button>
           )}
         </div>
       </div>
