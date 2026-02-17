@@ -1,119 +1,101 @@
-// Core Types for Workout Tracker
+// ── Core Entities ──
 
-export interface Template {
-  id?: number;
-  name: string;
-  description?: string;
-  days: TemplateDay[];
-  isActive: boolean;
-  createdAt: number;
-  updatedAt: number;
-}
-
-export interface TemplateDay {
-  dayName: string; // e.g., "Tuesday - Push"
-  exercises: TemplateExercise[];
-}
-
-export interface TemplateExercise {
+export interface Exercise {
   id: string;
   name: string;
+  primaryMuscle: string;
+  secondaryMuscles: string[];
+  equipment?: string;
+}
+
+export interface Template {
+  id: string;
+  name: string;
+  items: TemplateItem[];
+}
+
+export interface TemplateItem {
+  exerciseId: string;
+  order: number;
   sets: number;
   repsMin: number;
   repsMax: number;
-  restSeconds: number;
+  restSec?: number;
   notes?: string;
-  category?: 'compound' | 'isolation' | 'accessory';
 }
 
-export interface Workout {
+export interface ScheduledWorkout {
   id?: number;
-  templateId: number;
-  templateName: string;
-  dayName: string;
-  date: number; // timestamp
-  startedAt?: number;
-  completedAt?: number;
-  exercises: WorkoutExercise[];
-  notes?: string;
-  duration?: number; // in seconds
+  dateISO: string; // "YYYY-MM-DD"
+  templateId: string;
+  status: "planned" | "done" | "skipped";
+  overrideTemplateId?: string;
 }
 
-export interface WorkoutExercise {
-  id: string;
-  templateExerciseId: string;
-  name: string;
-  sets: WorkoutSet[];
+export interface Session {
+  id?: number;
+  dateISO: string;
+  templateId?: string;
+  startedAt: number;
+  finishedAt?: number;
   notes?: string;
-  isCompleted: boolean;
 }
 
-export interface WorkoutSet {
-  id: string;
+export interface SessionExercise {
+  id?: number;
+  sessionId: number;
+  exerciseId: string;
+  order: number;
+  targetRepsMin: number;
+  targetRepsMax: number;
+}
+
+export interface SessionSet {
+  id?: number;
+  sessionExerciseId: number;
   setNumber: number;
-  reps: number | null;
-  weight: number | null;
-  completed: boolean;
-  rpe?: number; // Rate of Perceived Exertion (1-10)
-  isPersonalRecord?: boolean;
+  targetRepsMin: number;
+  targetRepsMax: number;
+  reps?: number;
+  weight?: number;
+  rpe?: number;
+  isFailure: boolean;
+  isWarmup: boolean;
 }
 
-export interface PersonalRecord {
-  id?: number;
-  exerciseName: string;
-  weight: number;
-  reps: number;
-  date: number;
-  workoutId: number;
-  oneRepMax: number; // Calculated
+export interface AppSettings {
+  id: string; // always "settings"
+  planStartDate: string;
+  autoFillLastWeights: boolean;
+  theme: "light" | "dark" | "system";
 }
 
-export interface BodyWeight {
-  id?: number;
-  weight: number;
-  date: number;
-  notes?: string;
-}
+// ── Helpers ──
 
-// UI State Types
-export interface ActiveWorkoutState {
-  workoutId?: number;
-  currentExerciseIndex: number;
-  isRestTimerActive: boolean;
-  restTimeRemaining: number;
-}
+export type DayOfWeek = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
-// Analytics Types
-export interface ExerciseProgress {
-  exerciseName: string;
-  data: {
-    date: number;
-    weight: number;
-    volume: number;
-    oneRepMax: number;
-  }[];
-}
+export const SCHEDULE_MAP: Record<number, string | null> = {
+  0: null,       // Sunday  = rest
+  1: null,       // Monday  = rest
+  2: "push",     // Tuesday
+  3: "pull",     // Wednesday
+  4: "legs",     // Thursday
+  5: "upper",    // Friday
+  6: "lower",    // Saturday
+};
 
-export interface WeeklyComparison {
-  currentWeek: WorkoutSummary;
-  previousWeek: WorkoutSummary;
-  changes: {
-    exerciseName: string;
-    volumeChange: number;
-    volumeChangePercent: number;
-    weightChange: number;
-    isPR: boolean;
-  }[];
-}
+export const TEMPLATE_COLORS: Record<string, string> = {
+  push: "bg-red-500",
+  pull: "bg-blue-500",
+  legs: "bg-amber-500",
+  upper: "bg-purple-500",
+  lower: "bg-green-500",
+};
 
-export interface WorkoutSummary {
-  weekStart: number;
-  totalVolume: number;
-  workoutsCompleted: number;
-  exercises: {
-    name: string;
-    totalVolume: number;
-    maxWeight: number;
-    totalSets: number;
-  }[];
-}
+export const TEMPLATE_LABELS: Record<string, string> = {
+  push: "Push",
+  pull: "Pull",
+  legs: "Legs",
+  upper: "Upper",
+  lower: "Lower",
+};

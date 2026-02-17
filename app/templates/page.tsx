@@ -1,65 +1,75 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { useTemplates } from '@/lib/hooks/use-templates';
-import { Header } from '@/components/layout/header';
-import { Button } from '@/components/ui/button';
-import { TemplateCard } from '@/components/templates/template-card';
-import { Plus, Dumbbell } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { useTemplates } from "@/lib/hooks/use-templates";
+import { useExerciseMap } from "@/lib/hooks/use-exercises";
+import { TEMPLATE_COLORS } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 export default function TemplatesPage() {
-  const { templates, initializeDefaultTemplate, setActiveTemplate } = useTemplates();
-
-  useEffect(() => {
-    initializeDefaultTemplate();
-  }, []);
-
-  const handleSelectTemplate = async (templateId: number) => {
-    await setActiveTemplate(templateId);
-  };
+  const templates = useTemplates();
+  const exerciseMap = useExerciseMap();
 
   return (
-    <>
-      <Header 
-        title="Templates"
-        action={
-          <Button size="sm" variant="outline">
-            <Plus className="w-4 h-4 mr-2" />
-            New
-          </Button>
-        }
-      />
+    <div className="max-w-lg mx-auto px-4 py-5">
+      <h1 className="text-xl font-bold mb-5">Templates</h1>
 
-      <div className="px-4 py-6">
-        {templates.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <Dumbbell className="w-16 h-16 mb-4 text-gray-600" />
-            <h2 className="text-xl font-semibold mb-2">No Templates</h2>
-            <p className="text-gray-400 text-center mb-6">
-              Create your first workout template
-            </p>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              Create Template
-            </Button>
-          </div>
-        ) : (
-          <motion.div 
-            className="space-y-3"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+      {templates.length === 0 && (
+        <div className="text-center py-20">
+          <p className="text-[var(--muted-fg)] text-sm">No templates yet</p>
+        </div>
+      )}
+
+      <div className="space-y-4">
+        {templates.map((tpl) => (
+          <div
+            key={tpl.id}
+            className="rounded-xl border border-[var(--border)] overflow-hidden"
           >
-            {templates.map((template) => (
-              <TemplateCard
-                key={template.id}
-                template={template}
-                onSelect={() => handleSelectTemplate(template.id!)}
+            {/* Template header */}
+            <div className="flex items-center gap-3 px-4 py-3 bg-[var(--muted)]">
+              <span
+                className={cn(
+                  "w-3 h-3 rounded-full",
+                  TEMPLATE_COLORS[tpl.id] ?? "bg-gray-400"
+                )}
               />
-            ))}
-          </motion.div>
-        )}
+              <h2 className="text-sm font-semibold">{tpl.name}</h2>
+            </div>
+
+            {/* Exercises */}
+            <div className="divide-y divide-[var(--border)]">
+              {tpl.items.map((item, i) => {
+                const ex = exerciseMap.get(item.exerciseId);
+                return (
+                  <div
+                    key={i}
+                    className="flex items-center justify-between px-4 py-2.5"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs font-mono text-[var(--muted-fg)] w-5">
+                        {item.order}
+                      </span>
+                      <div>
+                        <p className="text-sm font-medium">
+                          {ex?.name ?? item.exerciseId}
+                        </p>
+                        {item.notes && (
+                          <p className="text-[11px] text-[var(--muted-fg)]">
+                            {item.notes}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <span className="text-xs text-[var(--muted-fg)] whitespace-nowrap">
+                      {item.sets} × {item.repsMin === item.repsMax ? item.repsMin : `${item.repsMin}-${item.repsMax}`}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </div>
-    </>
+    </div>
   );
 }

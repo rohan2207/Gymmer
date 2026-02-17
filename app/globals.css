@@ -1,53 +1,39 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:is(.dark *));
+
 @theme inline {
   --font-sans: var(--font-geist-sans);
+  --color-background: var(--bg);
+  --color-foreground: var(--fg);
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+:root {
+  --bg: #ffffff;
+  --fg: #09090b;
+  --muted: #f4f4f5;
+  --muted-fg: #71717a;
+  --border: #e4e4e7;
+  --ring: #3b82f6;
+  --accent: #3b82f6;
 }
 
-html {
-  -webkit-tap-highlight-color: transparent;
+.dark {
+  --bg: #09090b;
+  --fg: #fafafa;
+  --muted: #18181b;
+  --muted-fg: #a1a1aa;
+  --border: #27272a;
+  --ring: #3b82f6;
+  --accent: #3b82f6;
 }
 
-body {
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
-  background: #030712;
-  color: #ffffff;
-  overflow-x: hidden;
-}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-tap-highlight-color: transparent; scroll-behavior: smooth; }
+body { font-family: var(--font-sans), system-ui, sans-serif; background: var(--bg); color: var(--fg); overflow-x: hidden; }
 
-/* Safe area insets for mobile devices */
-.safe-area-inset-bottom {
-  padding-bottom: env(safe-area-inset-bottom);
-}
-
-/* Smooth scrolling */
-html {
-  scroll-behavior: smooth;
-}
-
-/* Hide scrollbar but keep functionality */
-.hide-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.hide-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-
-/* Custom number input without spinners */
 input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
+input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type="number"] { -moz-appearance: textfield; }
 
-input[type="number"] {
-  -moz-appearance: textfield;
-}
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }

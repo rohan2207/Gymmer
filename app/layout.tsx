@@ -1,33 +1,36 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
-import { BottomNav } from "@/components/layout/bottom-nav";
+import { ThemeProvider } from "@/components/layout/theme-provider";
+import { AppShell } from "@/components/layout/app-shell";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Gymmer - Workout Tracker",
-  description: "Track your workouts, monitor progress, and achieve your fitness goals",
+  title: "Muscle Calendar",
+  description: "Track your workouts. Build muscle. Stay consistent.",
   manifest: "/manifest.json",
-  themeColor: "#0a0a0a",
-  viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: "#09090b",
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html lang="en" className="dark">
-      <body className={`${geistSans.variable} antialiased bg-gray-950 text-white`}>
-        <div className="pb-16 min-h-screen">
-          {children}
-        </div>
-        <BottomNav />
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${geistSans.variable} antialiased`}>
+        <ThemeProvider>
+          <AppShell>{children}</AppShell>
+        </ThemeProvider>
       </body>
     </html>
   );
