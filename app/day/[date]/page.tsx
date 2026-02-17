@@ -154,7 +154,7 @@ export default function DayPage({
   const noWorkout = !session && !templateParam;
 
   return (
-    <div className="max-w-lg mx-auto px-4 pb-52">
+    <div className="max-w-lg mx-auto px-4">
       {/* ── Sticky header ── */}
       <div className="sticky top-0 z-30 bg-[var(--bg)]/95 backdrop-blur-sm pb-2 pt-3 -mx-4 px-4">
         <div className="flex items-center justify-between">
@@ -439,12 +439,17 @@ export default function DayPage({
         <CardioLogSection dateISO={date} />
       </div>
 
-      {/* Spacer so content doesn't hide behind sticky bars */}
-      {session && !isFinished && !isActiveRest && <div className="h-20" />}
+      {/* Bottom spacer: clears nav bar + finish bar + safe area.
+          Nav=56px, finish bar=~60px, safe-area=~34px on iPhone = ~150px.
+          Use generous value so nothing is ever hidden. */}
+      <div className="h-[180px] md:h-24" />
 
       {/* ── Sticky finish bar ── */}
       {session && !isFinished && !isActiveRest && (
-        <div className="fixed bottom-14 md:bottom-0 inset-x-0 z-20 px-4 py-2 bg-[var(--bg)]/95 backdrop-blur-sm border-t border-[var(--border)]">
+        <div
+          className="fixed inset-x-0 z-20 px-4 py-2 bg-[var(--bg)]/95 backdrop-blur-sm border-t border-[var(--border)] md:bottom-0"
+          style={{ bottom: "calc(3.5rem + env(safe-area-inset-bottom, 0px))" }}
+        >
           <div className="max-w-lg mx-auto">
             <button
               onClick={handleFinish}
