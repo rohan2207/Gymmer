@@ -1,7 +1,7 @@
 "use client";
 
 import { useLiveQuery } from "dexie-react-hooks";
-import { startOfWeek, endOfWeek, format } from "date-fns";
+import { startOfWeek, endOfWeek, format, parseISO } from "date-fns";
 import { db } from "@/lib/db/schema";
 import { toDateISO } from "@/lib/utils";
 import { TRAINING_CYCLE } from "@/lib/types";
@@ -44,7 +44,7 @@ export function useWeekProgress(): WeekProgress | undefined {
           done.push({
             templateId: s.templateId,
             dateISO: s.dateISO,
-            dayLabel: format(new Date(s.dateISO), "EEE"),
+            dayLabel: format(parseISO(s.dateISO), "EEE"),
           });
         }
       }
